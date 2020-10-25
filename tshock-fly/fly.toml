@@ -1,0 +1,17 @@
+# fly.toml file generated for cold-firefly-38 on 2020-10-25T06:57:45Z
+
+app = "cold-firefly-38"
+
+
+[[services]]
+  internal_port = 7777
+  protocol = "tcp"
+
+  [services.concurrency]
+    hard_limit = 25
+    soft_limit = 20
+
+
+  [[services.tcp_checks]]
+    interval = 10000
+    timeout = 2000
