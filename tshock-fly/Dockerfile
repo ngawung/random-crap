@@ -14,8 +14,8 @@ RUN apt-get update && \
     mkdir -p /tshock/log && \
     mkdir -p /tshock/ServerPlugins
 
-ADD /ServerPlugins/* /tshock/ServerPlugins
+# ADD /ServerPlugins/* /tshock/ServerPlugins
 
 ENV PORT "7777"
 
-ENTRYPOINT ["mono TerrariaServer.exe -autocreate 1 -world LonelyEskrim.wld -port 7777 -ip 0.0.0.0 -maxplayers 3"]
+ENTRYPOINT ["mono", "TerrariaServer.exe", "-configpath", "/config", "-worldpath", "/world", "-logpath", "/log", "-maxplayers", "3", "-port", "7777", "-world", "/world/EsKrim.wld", "-autocreate", "1"]
