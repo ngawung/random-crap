@@ -1,0 +1,21 @@
+{
+  "name": "bad",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "canvas": "^2.6.1",
+    "decode-gif": "^1.0.1",
+    "gifuct-js": "^2.0.0",
+    "gify-parse": "^1.0.7",
+    "image-to-ascii": "^3.0.13",
+    "rgbquant": "^1.1.2",
+    "write": "^2.0.0"
+  }
+}
