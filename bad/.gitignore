@@ -1,1 +1,12 @@
 node_modules/
+
+out.gif
+data_raw.dat
+
+video/out.gif
+video/video.mp4
+video/palette.png
+
+c/a.out
+c/data_raw.dat
+c/data_compress.dat
