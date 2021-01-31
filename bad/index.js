@@ -23,8 +23,9 @@ function chunkArray(myArray, chunk_size){
 const gif_buffer = fs.readFileSync("out.gif");
 
 let gif_info = gify.getInfo(gif_buffer);
-const gif_pal = gif_info.globalPaletteColorsRGB.map(x => {
-	return rgb2hex(x.r, x.g, x.b);
+const gif_pal = new Map();
+gif_info.globalPaletteColorsRGB.map((x, index) => {
+	gif_pal.set(`${x.r}:${x.g}:${x.b}`, index);
 });
 
 gif_info = null;
@@ -45,19 +46,23 @@ for (let i=0; i<gifData.numFrames(); i++) {
 
 	newBlit = new Uint8Array(num_pixels);
 
-	ca = chunkArray(buffer, 4);
+	var index = 0;
+	var indexed_num = 0;
+    var arrayLength = buffer.length;
+    var chunk_size = 4;
+    
+    for (index = 0; index < arrayLength; index += chunk_size) {
+        myChunk = buffer.slice(index, index+chunk_size);
+        // Do something if you want with the group
+        if (!gif_pal.has(`${myChunk[0]}:${myChunk[1]}:${myChunk[2]}`)) throw `pal not found ${myChunk[0]}:${myChunk[1]}:${myChunk[2]}`;
+        let indexed = gif_pal.get(`${myChunk[0]}:${myChunk[1]}:${myChunk[2]}`)
+		newBlit[indexed_num] = indexed;
+		indexed_num++;
+    }
 
 	console.log(i, gifData.numFrames());
 
-	for (let k=0; k<ca.length; k++) {
-		let rgb = rgb2hex(ca[k][0], ca[k][1], ca[k][2]);
-		let index = gif_pal.indexOf(rgb);
-		if (index == -1) console.log(rgb);
-		newBlit[k] = index;
-	}
-
 	stream.write(newBlit);
-	break;
 }
 
 stream.end();

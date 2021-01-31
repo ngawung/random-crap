@@ -12,6 +12,7 @@ inline unsigned int to_uint(char ch) {
 int main() {
 
 	lz77::compress_t compress;
+	lz77::decompress_t decompress;
 
 	std::ofstream wr;
 	std::ifstream op;
@@ -62,7 +63,7 @@ int main() {
 	// std::cout << std::endl;
 
 	op.open("data_compress.dat", std::ios::in | std::ios::binary);
-	std::vector<unsigned char> buffer2(1024, 0);
+	std::vector<unsigned char> buffer2(2, 0);
 	std::string temp3("");
 	while(!op.eof()) {
 		op.read((char*)&buffer2[0], buffer2.size());
@@ -75,7 +76,6 @@ int main() {
 			    for (char ch : temp3) std::cout << "0x" << to_uint(ch) << ' ';
 			    std::cout << std::endl;
 
-	    		lz77::decompress_t decompress;
 	    		std::string temp2;
 	    		decompress.feed(temp3, temp2);
 

@@ -4,58 +4,85 @@
 #include <string>
 #include <sstream>
 
+bool getNewBuffer(std::ifstream* op, char* buffer, int buffer_size) {
+	if (op->eof()) return false;
+
+	op->read(buffer, buffer_size);
+	std::streamsize s=op->gcount();
+    if (s == 0) return false;
+    else return true;
+}
+
 int main() {
 
-	int length = 1024;
+	lz77::decompress_t decompress;
+	std::ifstream op;
 
-	std::ifstream in("data_compress.dat", std::ios::in | std::ios::binary);
-	unsigned char * buffer = new unsigned char[length]();
+	std::vector<unsigned char> separator{0x00, 0x24, 0x00};
+	std::vector<unsigned char> eof{0x00, 0x22, 0x00};
 
-	int lastCount = 0;
+	int buffer_size = 128;
 	int count = 0;
 
-	std::stringstream ss;
-	std::string str;
+	int lastIndex = 0;
+	std::vector<unsigned char> lastBuffer;
+	std::string tempData("");
 
-	lz77::decompress_t decompress;
+	op.open("data_compress.dat", std::ios::in | std::ios::binary);
+	std::vector<unsigned char> buffer(buffer_size, 0);
 
-	while(!in.eof()) {
-		in.read((char*)buffer, length);
-	    std::streamsize s=in.gcount();
-	    if (s == 0) break;
+	while(true) {
 
-	    for (int i=0; i<length; i++) {
-	    	if (buffer[i] == '\x00' && buffer[i+1] == '\x44' && buffer[i+2] == '\x00') {
-	    		// if (count == 5) break;
+		if (lastBuffer.size() == 0) {
+			getNewBuffer(&op, (char*)&buffer[0], buffer.size());
+			lastBuffer = buffer;
+		}
 
+		if (tempData.length() == 0) {
+			bool isSeparatorFound = false;
 
-	    		ss.seekg(0, std::ios::end);
-	    		int size = ss.tellg();
-	    		ss.seekg(0, std::ios::beg);
-	    		ss.str().swap(str);
-	    		str.resize(size);
+			for (int i=lastIndex; i<lastBuffer.size(); i++) {
+				tempData.push_back(lastBuffer[i]);
 
-	    		std::cout<<std::endl<<count<< "size "<<sizeof(str)<<std::endl;
+				if (lastBuffer[i] == '\x00' && lastBuffer[i-1] == '\x24' && lastBuffer[i-2] == '\x00') {
+					count++;
+					std::cout<<"separator "<<count<<std::endl;
+					lastIndex = 0;
+					lastBuffer.erase(lastBuffer.begin(), lastBuffer.begin() + i);
+					isSeparatorFound = true;
+					break;
+				} else if (lastBuffer[i] == '\x00' && lastBuffer[i-1] == '\x24' && lastBuffer[i-2] == '\x00') {
+					std::cout<<"eof"<<std::endl;
+					break;
+				}
 
-	    		std::string sss;
-	    		decompress.feed(ss.str(), sss);
-	    		const std::string&  res = decompress.result();
+				lastIndex = i;
+			}
 
-	    		// // sss.seekg(0, std::ios::end);
-	    		std::cout<<std::endl<<count<< "size "<<res.size()<<std::endl;
+			if (!isSeparatorFound) {
+				getNewBuffer(&op, (char*)&buffer[0], buffer.size());
+				lastBuffer.insert(lastBuffer.end(), buffer.begin(), buffer.end());
+				lastIndex++;
+				continue;
+			}
+		}
 
+		tempData.pop_back();
+		tempData.pop_back();
+		tempData.pop_back();
 
-	    		// current.clear();
-	    	} else {
-	    		count++;
-	    		ss << buffer[i];
-	    		// current.push_back(buffer[i]);
-	    	}
-	    }
-	    // std::cout<<"yet,";
+		std::string temp2;
+    	decompress.feed(tempData, temp2);
+    	const std::string& result = decompress.result();
+
+    	tempData = "";
+
+    	if (result.length() != 256*192) {
+    		std::cout<<"length "<<result.length()<<std::endl;
+    		// return 0;
+    	}
+
 	}
-
-	// std::cout<<"size "<<current.size()<<std::endl;
 
 	return 0;
 }
