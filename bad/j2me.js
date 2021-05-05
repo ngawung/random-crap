@@ -30,69 +30,69 @@ let current, buffer, newBlit, ca
 
 const gif_pal_array = [];
 
-//// BLIT TO RGBA ////
-
 var writeStream = fs.createWriteStream('data');
 
-for (let i=0; i<gifData.numFrames(); i++) {
-	current = gifData.frameInfo(i);
+//// BLIT TO RGBA ////
+
+// for (let i=0; i<gifData.numFrames(); i++) {
+// 	current = gifData.frameInfo(i);
+
+// 	buffer = new Uint8Array(num_pixels * 4)
+// 	formated_buffer = Buffer.alloc(num_pixels)
+
+// 	gifData.decodeAndBlitFrameRGBA(i, buffer)
+
+// 	for (let i=0; i<num_pixels; i++) {
+// 		const pal_name = `${buffer[4*i]},${buffer[4*i+1]},${buffer[4*i+2]},${buffer[4*i+3]}`
+// 		if (gif_pal_array.indexOf(pal_name) == -1) gif_pal_array.push(pal_name);
+
+// 		formated_buffer[i] = gif_pal_array.indexOf(pal_name);
+// 	}
+
+// 	writeStream.write(formated_buffer);
+// 	console.log("blit to RGBA", i+1, gifData.numFrames());
+
+// }
+
+
+//////// HARDCODED VERSION ///////////
+
+let last_frame;
+
+for (let frame=0; frame<gifData.numFrames(); frame++) {
+	current = gifData.frameInfo(frame);
 
 	buffer = new Uint8Array(num_pixels * 4)
 	formated_buffer = Buffer.alloc(num_pixels)
 
-	gifData.decodeAndBlitFrameRGBA(i, buffer)
+	gifData.decodeAndBlitFrameRGBA(frame, buffer)
 
 	for (let i=0; i<num_pixels; i++) {
-		const pal_name = `${buffer[4*i]},${buffer[4*i+1]},${buffer[4*i+2]},${buffer[4*i]+3}`
+		if (buffer[4*i+3] != 255) {
+			if (last_frame[4*(i)+3] == 255) {
+				buffer[4*i]   = last_frame[4*(i)]
+				buffer[4*i+1] = last_frame[4*(i)+1]
+				buffer[4*i+2] = last_frame[4*(i)+2]
+				buffer[4*i+3] = last_frame[4*(i)+3]
+			} else throw "error";
+		}
+
+		const pal_name = `${buffer[4*i]},${buffer[4*i+1]},${buffer[4*i+2]},${buffer[4*i+3]}`
 		if (gif_pal_array.indexOf(pal_name) == -1) gif_pal_array.push(pal_name);
 
-		formated_buffer[i] = gif_pal_array.indexOf(pal_name);
+		if (pal_name == '0,0,1,255' || pal_name == '0,0,0,255')
+			formated_buffer[i] = 0;
+
+		else if (pal_name == '109,107,110,255' || pal_name == '254,254,254,255' || pal_name == '255,253,255,255')
+			formated_buffer[i] = 1;
+		
 	}
 
 	writeStream.write(formated_buffer);
-	console.log("blit to RGBA", i+1, gifData.numFrames());
 
+	last_frame = buffer;
+	console.log("blit to RGBA", frame, gifData.numFrames());
 }
 
 writeStream.close();
 console.log(gif_pal_array)
-
-// // get palette with map
-// const gif_pal = new Map();
-
-
-// finalBlit.forEach(blit => {
-//     for(let i=0; i<blit.length; i++) {
-//         gif_pal.set(blit[i], "random value");
-//     }
-// })
-
-// // convert map to array
-// for (const [key, value] of gif_pal.entries()) {
-//     gif_pal_array.push(key);
-// }
-
-// console.log(gif_pal_array);
-
-// // format finalBlit
-
-// finalBlit = finalBlit.map(blit => {
-//     let temp = []
-//     for(let i=0; i<blit.length; i++) {
-//         temp.push(gif_pal_array.indexOf(blit[i]));
-//     }
-
-//     return temp;
-// })
-
-// var writeStream = fs.createWriteStream('data');
-
-// finalBlit.forEach(blit => {
-// 	let b = Buffer.alloc(blit.length);
-// 	for(let i=0; i<blit.length; i++) {
-//         b[i] = blit[i];
-//     }
-// 	writeStream.write(b)
-// })
-
-// writeStream.close();
