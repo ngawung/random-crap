@@ -52,9 +52,11 @@ for (let i=0; i<gifData.numFrames(); i++) {
 
     finalBlit.push(newBlit);
 
-	console.log(i, gifData.numFrames());
+	console.log("blit to RGBA", i+1, gifData.numFrames());
 
 }
+
+console.log("remove transparent");
 
 // remove any transparent
 for (let i=0; i<finalBlit.length; i++) {
@@ -91,8 +93,8 @@ for (const [key, value] of gif_pal.entries()) {
     gif_pal_array.push(key);
 }
 
-// console.log(gif_pal_array);
-// return;
+console.log(gif_pal_array);
+return;
 
 // format finalBlit
 
