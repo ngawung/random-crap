@@ -32,7 +32,7 @@ for (let frame=0; frame<gifData.numFrames(); frame++) {
 
 	buffer = new Uint8Array(num_pixels * 4)
 	gifData.decodeAndBlitFrameRGBA(frame, buffer)
-	formated_buffer = Buffer.alloc(num_pixels / chunk)
+	formated_buffer = Buffer.alloc(num_pixels)
 
 	// convert to single color
 	for (i=0; i<num_pixels; i++) {
@@ -53,26 +53,28 @@ for (let frame=0; frame<gifData.numFrames(); frame++) {
 
 		// hardcoded pal color
 		if (pal_name == '0,0,1,255' || pal_name == '0,0,0,255')
-			pixel_array.push(0);
+			// pixel_array.push(0);
+		formated_buffer[i] = 0;
 
-		else if (pal_name == '109,107,110,255' || pal_name == '254,254,254,255' || pal_name == '255,253,255,255')
-			pixel_array.push(1);
+		else if (pal_name == '108,106,108,255' || pal_name == '254,252,254,255' || pal_name == '254,253,254,255')
+			// pixel_array.push(1);
+		formated_buffer[i] = 1;
 
 		else throw "error " + pal_name;
 	}
 
 
 	// convert to bit
-	for (i=0; i<num_pixels/8; i++) {
-		bit_data = 0x0;
+	// for (i=0; i<num_pixels/7; i++) {
+	// 	bit_data = 0x0;
 
-		for (k=0; k<8; k++) {
-			if (pixel_array[i*8+k] == 1)
-				bit_data = bit_data | (bit_check << k)
-		}
+	// 	for (k=0; k<7; k++) {
+	// 		if (pixel_array[i*7+k] == 1)
+	// 			bit_data = bit_data | (bit_check << k)
+	// 	}
 
-		formated_buffer[i] = bit_data;
-	}
+	// 	formated_buffer[i] = bit_data;
+	// }
 
 	writeStream.write(formated_buffer);
 
@@ -80,6 +82,9 @@ for (let frame=0; frame<gifData.numFrames(); frame++) {
 	pixel_array = []
 	console.log("blit to RGBA", frame, gifData.numFrames());
 }
+
+console.log(gif_pal_array)
+console.log(gifData.width, gifData.height, gifData.width * gifData.height)
 
 
 // 	// split frame pixel to chunk part (4 array each)
