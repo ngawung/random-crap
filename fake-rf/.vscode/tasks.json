@@ -1,0 +1,87 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build and run",
+            "type": "shell",
+            "command": "echo done",
+            "problemMatcher": [],
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "make run",
+                "run desmume"
+            ]
+        },
+        {
+            "label": "make run",
+            "type": "shell",
+            "command": "make",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+        },
+        {
+            "label": "make clean",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "clean"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "make fat",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "fat"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "run desmume",
+            "type": "shell",
+            "isBackground": true,
+            "command": "/usr/games/desmume",
+            "args": [
+                "--cflash-image=${workspaceFolder}/tmp/drastic_dldi.img",
+                "${workspaceFolder}/Game/bin/Game.nds"
+            ],
+            "presentation": {
+                "clear": true,
+                "reveal": "always"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "gdb-debug",
+            "type": "shell",
+            "dependsOn": [
+                "make debug"
+            ],
+            "isBackground": false,
+            "command": "/usr/games/desmume",
+            "args": [
+                "--arm9gdb=20000",
+                "${workspaceFolder}/dist/${workspaceFolderBasename}.nds"
+            ],
+            "presentation": {
+                "clear": true,
+                "reveal": "always"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "stop-emulation",
+            "type": "shell",
+            "command": "killall",
+            "args": [
+                "-KILL",
+                "desmume"
+            ],
+            "problemMatcher": []
+        }
+    ]
+}

@@ -1,0 +1,29 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/dist/${workspaceFolderBasename}.elf",
+            "targetArchitecture": "arm",
+            // "preLaunchTask": "gdb-debug", // run this task manually then start debug
+            "postDebugTask": "stop-emulation",
+            "serverLaunchTimeout": 10000,
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/home/melody/Desktop/devkitpro/devkitARM/bin/arm-none-eabi-gdb",
+            "miDebuggerServerAddress": "localhost:20000",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing",
+                    "text": "file ${workspaceFolder}/${workspaceFolderBasename}.elf -enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}
