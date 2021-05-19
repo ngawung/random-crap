@@ -15,11 +15,15 @@ int main() {
     in.seekg(0, std::ios::beg);
 
     int frame = 0;
+    uint16_t blockSize;
 
     while (!in.eof()) {
         in.read(&data[0], data.size());
         std::string out = compress.feed(data);
-        in2.write(out.c_str(), out.size());
+        blockSize = out.size();
+        
+        in2.write(reinterpret_cast<const char*>(&blockSize), sizeof(blockSize));
+        in2.write(out.c_str(), blockSize);
         
         frame++;
         std::cout << frame << std::endl;

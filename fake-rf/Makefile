@@ -30,7 +30,7 @@ SOURCES  := source
 INCLUDES := include
 DATA     := data
 GRAPHICS :=
-AUDIO    :=
+AUDIO    := maxmod
 ICON     :=
 
 # specify a directory which contains the nitro filesystem

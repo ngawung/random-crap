@@ -60,7 +60,10 @@ main.o: /home/melody/workspace/random-crap/fake-rf/source/main.cpp \
  /home/melody/SDK/devkitpro//libnds/include/nds/arm9/videoGL.h \
  /home/melody/SDK/devkitpro//libnds/include/nds/arm9/nand.h \
  /home/melody/SDK/devkitpro//libnds/include/filesystem.h \
- /home/melody/workspace/random-crap/fake-rf/source/lz77.h
+ /home/melody/workspace/random-crap/fake-rf/source/lz77.h \
+ /home/melody/workspace/random-crap/fake-rf/source/pallete.hpp \
+ /home/melody/SDK/devkitpro//libnds/include/maxmod9.h \
+ /home/melody/SDK/devkitpro//libnds/include/mm_types.h
 /home/melody/SDK/devkitpro//libnds/include/nds.h:
 /home/melody/SDK/devkitpro//libnds/include/nds/libversion.h:
 /home/melody/SDK/devkitpro//libnds/include/nds/ndstypes.h:
@@ -123,3 +126,6 @@ main.o: /home/melody/workspace/random-crap/fake-rf/source/main.cpp \
 /home/melody/SDK/devkitpro//libnds/include/nds/arm9/nand.h:
 /home/melody/SDK/devkitpro//libnds/include/filesystem.h:
 /home/melody/workspace/random-crap/fake-rf/source/lz77.h:
+/home/melody/workspace/random-crap/fake-rf/source/pallete.hpp:
+/home/melody/SDK/devkitpro//libnds/include/maxmod9.h:
+/home/melody/SDK/devkitpro//libnds/include/mm_types.h:
