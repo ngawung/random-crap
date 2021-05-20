@@ -7,6 +7,12 @@
 #include <maxmod9.h>
 
 FILE* file = 0;
+bool shouldDraw;
+bool requestQueue = false;
+bool requestDone = false;
+std::string currentQueue;
+std::string nextQueue;
+int currentFrame = 0;
 
 mm_word on_stream_request( mm_word length, mm_addr dest, mm_stream_formats format ) {
 	if(file){
@@ -30,11 +36,41 @@ mm_word on_stream_request( mm_word length, mm_addr dest, mm_stream_formats forma
 	return length;
 }
 
+void VBlankProc() {
+	if (shouldDraw) {
+		shouldDraw = false;
+
+		// const char* cstr = currentQueue.c_str();
+
+		// for (int x=0; x<256; x++) {
+		// 	for (int y=0; y<192; y++) {
+		// 		u16 pal = pallete[(int)cstr[x+y*256]];
+		// 		if (pal != ARGB16(0,0,0,0)) dmaCopyWordsAsynch(2, &pal, VRAM_A + x+y*256, sizeof(pal));
+		// 	}
+		// }
+
+		dmaCopyWordsAsynch(2, currentQueue.c_str(), VRAM_A, sizeof(currentQueue));
+		std::cout << "copy" << std::endl;
+
+		if (!requestDone) std::cout << "kosong" << std::endl;
+		currentQueue = nextQueue;
+		requestDone = false;
+		requestQueue = true;
+	}
+}
+
+void TimerTick() {
+	shouldDraw = true;
+}
+
 int main(void) {
 	consoleDemoInit();
 
 	videoSetMode(MODE_5_2D);
 	vramSetBankA(VRAM_A_MAIN_BG);
+
+	int bg = bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
+	bgUpdate();
 
 	if(nitroFSInit(NULL)) {
 		chdir("nitro:/");
@@ -47,6 +83,37 @@ int main(void) {
 	// mmLoadEffect(0);
 	// mmEffect(0);
 
+	lz77::decompress_t decompress;
+	std::string extra;
+	
+	std::ifstream in("compressed", std::ios::in | std::ios::binary);
+	uint16_t blockSize;
+	std::string data;
+	in.seekg(0, std::ios::beg);
+	in.read((char*)&blockSize, sizeof(blockSize));
+	data.resize(blockSize);
+	in.read(&data[0], blockSize);
+
+	decompress.feed(data, extra);
+	currentQueue = decompress.result();
+
+	u16* ptr = bgGetGfxPtr(bg);
+
+	for (int x=0; x<256; x++) {
+		for (int y=0; y<192; y++) {
+			*(ptr+x+y*256) = pallete[(int)currentQueue.data()[x+y*256]];
+		}
+	}
+
+	// in.read((char*)&blockSize, sizeof(blockSize));
+	// data.resize(blockSize);
+	// in.read(&data[0], blockSize);
+
+	// decompress.feed(data, extra);
+	// nextQueue = decompress.result();
+
+	std::cout << currentQueue.size() << std::endl;
+
 	mm_stream mystream;
 	mystream.sampling_rate	= 22050;					// sampling rate = 25khz
 	mystream.buffer_length	= 1024;						// buffer length = 1200 samples
@@ -58,59 +125,54 @@ int main(void) {
 	mmStreamOpen( &mystream );
 	mmStreamUpdate(); mmStreamUpdate();
 
-	
-	int bg = bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0, 0);
-	u16* videMemoryMain = bgGetGfxPtr(bg);
-
-	lz77::decompress_t decompress;
-	std::string extra;
-	
-	std::ifstream in("compressed", std::ios::in | std::ios::binary);
-	std::string data;
-	uint16_t blockSize;
-	in.seekg(0, std::ios::beg);
-	
-	
-	int delay = 0;
-	int maxDelay = 2;
-
 	while(true) {
+		// uint8_t frameData[256*192*2];
+		// for (int x=0; x<256; x++) {
+		// 	for (int y=0; y<192; y++) {
+		// 		*(VRAM_A+x+y*256) = (currentQueue.c_str()[x+y*256*2]) | (currentQueue.c_str()[x+y*256*2+1]<<8);
+		// 	}
+		// }
 
-		// wait until line 0
-		// swiIntrWait( 0, IRQ_VCOUNT);
-		
+		// if (!in.eof()) {
+		// 	in.read((char*)&blockSize, sizeof(blockSize));
+		// 	data.resize(blockSize);
+		// 	in.read(&data[0], blockSize);
+
+		// 	decompress.feed(data, extra);
+		// 	currentQueue = decompress.result();
+		// 	std::cout << currentQueue.size();
+
+		// 	for (int x=0; x<256; x++) {
+		// 		for (int y=0; y<192; y++) {
+		// 			*(VRAM_A+x+y*256) = (currentQueue.data()[x+y*256*2]) | (currentQueue.data()[x+y*256*2+1]<<8);
+		// 		}
+		// 	}
+
+			// dmaCopyHalfWordsAsynch(3, currentQueue.data(), VRAM_A, sizeof(currentQueue));
+		// }
+
+		swiWaitForVBlank();
+	}
+
+	irqSet(IRQ_VBLANK, VBlankProc);
+	timerStart(1, ClockDivider_1024, TIMER_FREQ_1024(30), TimerTick);
+	
+	while(true) {
 		// update stream
 		mmStreamUpdate();
-
-		if (delay >= maxDelay && !in.eof()) {
-			delay = 0;
-
+		// std::cout << "loop" << std::endl;
+		if (requestQueue) {
+			std::cout << "read" << std::endl;
 			in.read((char*)&blockSize, sizeof(blockSize));
 			data.resize(blockSize);
 			in.read(&data[0], blockSize);
 
-			if (!decompress.feed(data, extra) || extra.size() > 0) {
-				std::cout << "Sanity error: failed to decompress whole buffer." << std::endl;
-			}
-
-			// std::cout << blockSize << std::endl;
-			// std::cout << decompress.result().size() << std::endl;
-
-			std::string map = decompress.result();
-
-			for (int x=0; x<256; x++) {
-				for (int y=0; y<192; y++) {
-					u16 pal = pallete[(int)map.c_str()[x+y*256]];
-					if (pal != ARGB16(0,0,0,0)) videMemoryMain[x+y*256] = pal;
-				}
-			}
+			decompress.feed(data, extra);
+			nextQueue = decompress.result();
+			std::cout << "done" << std::endl;
+			requestQueue = false;
+			requestDone = true;
 		}
-
-		
-
-
-		swiWaitForVBlank();
-		delay++;
 	}
 
 	return 0;

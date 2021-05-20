@@ -35,24 +35,26 @@ var writeStream = fs.createWriteStream('data');
 //// BLIT TO RGBA ////
 
 let last_frame;
+let buf = Buffer.alloc(2);;
 
 for (let frame=0; frame<gifData.numFrames(); frame++) {
 	current = gifData.frameInfo(frame);
 
 	buffer = new Uint8Array(num_pixels * 4)
+	// data_16 = new Uint16Array(num_pixels);
 	formated_buffer = Buffer.alloc(num_pixels)
 
 	gifData.decodeAndBlitFrameRGBA(frame, buffer)
 
 	for (let i=0; i<num_pixels; i++) {
-		// if (buffer[4*i+3] != 255) {
-		// 	if (last_frame[4*(i)+3] == 255) {
-		// 		buffer[4*i]   = last_frame[4*(i)]
-		// 		buffer[4*i+1] = last_frame[4*(i)+1]
-		// 		buffer[4*i+2] = last_frame[4*(i)+2]
-		// 		buffer[4*i+3] = last_frame[4*(i)+3]
-		// 	} else throw "error";
-		// }
+		if (buffer[4*i+3] != 255) {
+			if (last_frame[4*(i)+3] == 255) {
+				buffer[4*i]   = last_frame[4*(i)]
+				buffer[4*i+1] = last_frame[4*(i)+1]
+				buffer[4*i+2] = last_frame[4*(i)+2]
+				buffer[4*i+3] = last_frame[4*(i)+3]
+			} else throw "error";
+		}
 
 		const pal_name = convertRGB(`${buffer[4*i]},${buffer[4*i+1]},${buffer[4*i+2]},${buffer[4*i+3]}`);
 		if (gif_pal_array.indexOf(pal_name) == -1) gif_pal_array.push(pal_name);
@@ -63,24 +65,32 @@ for (let frame=0; frame<gifData.numFrames(); frame++) {
 		// else if (pal_name == '109,107,110,255' || pal_name == '254,254,254,255' || pal_name == '255,253,255,255')
 		// 	formated_buffer[i] = 1;
 
-		formated_buffer[i] = gif_pal_array.indexOf(pal_name);
-		
+		formated_buffer[i] = gif_pal_array.indexOf(pal_name)
+
+		// `let` r,g,b,a;
+
+		// r = Math.floor((buffer[4*i] * 31) / 255)
+		// g = Math.floor((buffer[4*i+1] * 31) / 255)
+		// b = Math.floor((buffer[4*i+2] * 31) / 255)
+		// if (buffer[4*i+3] == 255) a = 1;
+		// else throw "error";
+
+		// data_16[i] =  ( ((a) << 15) | (r)|((g)<<5)|((b)<<10));
+		// writeStream.write(Buffer.from(data_16.buffer));
+		// return
 	}
 
 	writeStream.write(formated_buffer);
 
 	last_frame = buffer;
 	console.log("blit to RGBA", frame, gifData.numFrames());
+
+	break;
 }
 
 writeStream.close();
 console.log(gif_pal_array)
 console.log(gif_pal_array.length)
 
-let formatted_array_pal = gif_pal_array.map(x => {
-	pal_arr = x.split(",");
-	return `ARGB16(${pal_arr[3]}, ${pal_arr[0]}, ${pal_arr[1]}, ${pal_arr[2]}),`
-})
-
 var pal_stream = fs.createWriteStream('palette.txt');
-pal_stream.write(formatted_array_pal.join("\n"));
+pal_stream.write(gif_pal_array.join(",\n"));
