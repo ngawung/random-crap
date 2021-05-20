@@ -7,7 +7,7 @@ $(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>dev
 endif
 
 # These set the information text in the nds file
-GAME_TITLE     := Rune Factory 5
+GAME_TITLE     := Bad Apple DS
 GAME_SUBTITLE1 := Ported by Melody
 GAME_SUBTITLE2 := http://melody.my.id
 

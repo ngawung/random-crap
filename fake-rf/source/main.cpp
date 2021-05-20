@@ -8,10 +8,10 @@
 
 FILE* file = 0;
 bool shouldDraw;
-bool requestQueue = false;
-bool requestDone = false;
+bool queueAvaible;
 std::string currentQueue;
-std::string nextQueue;
+const char*  nextQueue;
+int frameInQueue = 0;
 int currentFrame = 0;
 
 mm_word on_stream_request( mm_word length, mm_addr dest, mm_stream_formats format ) {
@@ -40,22 +40,23 @@ void VBlankProc() {
 	if (shouldDraw) {
 		shouldDraw = false;
 
-		// const char* cstr = currentQueue.c_str();
+		if (queueAvaible) {
+			queueAvaible = false;
 
-		// for (int x=0; x<256; x++) {
-		// 	for (int y=0; y<192; y++) {
-		// 		u16 pal = pallete[(int)cstr[x+y*256]];
-		// 		if (pal != ARGB16(0,0,0,0)) dmaCopyWordsAsynch(2, &pal, VRAM_A + x+y*256, sizeof(pal));
-		// 	}
-		// }
+			// for (int x=0; x<256; x++) {
+			// 	for (int y=0; y<192; y++) {
+			// 		VRAM_A[x+y*256] = pallete[(int)nextQueue[x+y*256]];
+			// 	}
+			// }
 
-		dmaCopyWordsAsynch(2, currentQueue.c_str(), VRAM_A, sizeof(currentQueue));
-		std::cout << "copy" << std::endl;
+			dmaCopyWordsAsynch(3, nextQueue, VRAM_A, 256*192*2);
 
-		if (!requestDone) std::cout << "kosong" << std::endl;
-		currentQueue = nextQueue;
-		requestDone = false;
-		requestQueue = true;
+			std::cout << "draw" << std::endl;
+		} else {
+			std::cout << "no queue" << std::endl;
+		}
+
+		
 	}
 }
 
@@ -66,11 +67,8 @@ void TimerTick() {
 int main(void) {
 	consoleDemoInit();
 
-	videoSetMode(MODE_5_2D);
-	vramSetBankA(VRAM_A_MAIN_BG);
-
-	int bg = bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
-	bgUpdate();
+	videoSetMode(MODE_FB0);
+	vramSetBankA(VRAM_A_LCD);
 
 	if(nitroFSInit(NULL)) {
 		chdir("nitro:/");
@@ -82,97 +80,50 @@ int main(void) {
 	mmInitDefault((char*)"soundbank.bin");
 	// mmLoadEffect(0);
 	// mmEffect(0);
-
-	lz77::decompress_t decompress;
-	std::string extra;
 	
 	std::ifstream in("compressed", std::ios::in | std::ios::binary);
 	uint16_t blockSize;
 	std::string data;
 	in.seekg(0, std::ios::beg);
-	in.read((char*)&blockSize, sizeof(blockSize));
-	data.resize(blockSize);
-	in.read(&data[0], blockSize);
-
-	decompress.feed(data, extra);
-	currentQueue = decompress.result();
-
-	u16* ptr = bgGetGfxPtr(bg);
-
-	for (int x=0; x<256; x++) {
-		for (int y=0; y<192; y++) {
-			*(ptr+x+y*256) = pallete[(int)currentQueue.data()[x+y*256]];
-		}
-	}
-
-	// in.read((char*)&blockSize, sizeof(blockSize));
-	// data.resize(blockSize);
-	// in.read(&data[0], blockSize);
-
-	// decompress.feed(data, extra);
-	// nextQueue = decompress.result();
+	
 
 	std::cout << currentQueue.size() << std::endl;
 
 	mm_stream mystream;
 	mystream.sampling_rate	= 22050;					// sampling rate = 25khz
-	mystream.buffer_length	= 1024;						// buffer length = 1200 samples
+	mystream.buffer_length	= 1200;						// buffer length = 1200 samples
 	mystream.callback		= on_stream_request;		// set callback function
-	mystream.format			= MM_STREAM_16BIT_MONO;	// format = stereo 16-bit
+	mystream.format			= MM_STREAM_16BIT_MONO;		// format = stereo 16-bit
 	mystream.timer			= MM_TIMER0;				// use hardware timer 0
 	mystream.manual			= true;						// use manual filling
 	file = fopen("bad.raw","rb");
 	mmStreamOpen( &mystream );
 	mmStreamUpdate(); mmStreamUpdate();
 
-	while(true) {
-		// uint8_t frameData[256*192*2];
-		// for (int x=0; x<256; x++) {
-		// 	for (int y=0; y<192; y++) {
-		// 		*(VRAM_A+x+y*256) = (currentQueue.c_str()[x+y*256*2]) | (currentQueue.c_str()[x+y*256*2+1]<<8);
-		// 	}
-		// }
-
-		// if (!in.eof()) {
-		// 	in.read((char*)&blockSize, sizeof(blockSize));
-		// 	data.resize(blockSize);
-		// 	in.read(&data[0], blockSize);
-
-		// 	decompress.feed(data, extra);
-		// 	currentQueue = decompress.result();
-		// 	std::cout << currentQueue.size();
-
-		// 	for (int x=0; x<256; x++) {
-		// 		for (int y=0; y<192; y++) {
-		// 			*(VRAM_A+x+y*256) = (currentQueue.data()[x+y*256*2]) | (currentQueue.data()[x+y*256*2+1]<<8);
-		// 		}
-		// 	}
-
-			// dmaCopyHalfWordsAsynch(3, currentQueue.data(), VRAM_A, sizeof(currentQueue));
-		// }
-
-		swiWaitForVBlank();
-	}
-
 	irqSet(IRQ_VBLANK, VBlankProc);
-	timerStart(1, ClockDivider_1024, TIMER_FREQ_1024(30), TimerTick);
+	timerStart(2, ClockDivider_1024, TIMER_FREQ_1024(30), TimerTick);
 	
 	while(true) {
+
 		// update stream
 		mmStreamUpdate();
-		// std::cout << "loop" << std::endl;
-		if (requestQueue) {
-			std::cout << "read" << std::endl;
+
+		if (!in.eof() && !queueAvaible) {
+			std::cout << "start queue" << std::endl;
 			in.read((char*)&blockSize, sizeof(blockSize));
 			data.resize(blockSize);
 			in.read(&data[0], blockSize);
 
+			lz77::decompress_t decompress;
+			std::string extra;
 			decompress.feed(data, extra);
-			nextQueue = decompress.result();
-			std::cout << "done" << std::endl;
-			requestQueue = false;
-			requestDone = true;
+			nextQueue = decompress.result().data();
+			queueAvaible = true;
+			std::cout << "queue avaible" << std::endl;
 		}
+
+		swiWaitForVBlank();
+
 	}
 
 	return 0;

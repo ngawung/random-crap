@@ -41,8 +41,8 @@ for (let frame=0; frame<gifData.numFrames(); frame++) {
 	current = gifData.frameInfo(frame);
 
 	buffer = new Uint8Array(num_pixels * 4)
-	// data_16 = new Uint16Array(num_pixels);
-	formated_buffer = Buffer.alloc(num_pixels)
+	data_16 = new Uint16Array(num_pixels);
+	// formated_buffer = Buffer.alloc(num_pixels)
 
 	gifData.decodeAndBlitFrameRGBA(frame, buffer)
 
@@ -65,27 +65,28 @@ for (let frame=0; frame<gifData.numFrames(); frame++) {
 		// else if (pal_name == '109,107,110,255' || pal_name == '254,254,254,255' || pal_name == '255,253,255,255')
 		// 	formated_buffer[i] = 1;
 
-		formated_buffer[i] = gif_pal_array.indexOf(pal_name)
+		// formated_buffer[i] = gif_pal_array.indexOf(pal_name)
 
-		// `let` r,g,b,a;
+		let r,g,b,a;
 
-		// r = Math.floor((buffer[4*i] * 31) / 255)
-		// g = Math.floor((buffer[4*i+1] * 31) / 255)
-		// b = Math.floor((buffer[4*i+2] * 31) / 255)
-		// if (buffer[4*i+3] == 255) a = 1;
-		// else throw "error";
+		r = Math.floor((buffer[4*i] * 31) / 255)
+		g = Math.floor((buffer[4*i+1] * 31) / 255)
+		b = Math.floor((buffer[4*i+2] * 31) / 255)
+		if (buffer[4*i+3] == 255) a = 1;
+		else throw "error";
 
 		// data_16[i] =  ( ((a) << 15) | (r)|((g)<<5)|((b)<<10));
+		data_16[i] =   ((r)|((g)<<5)|((b)<<10))
 		// writeStream.write(Buffer.from(data_16.buffer));
 		// return
 	}
 
-	writeStream.write(formated_buffer);
+	// writeStream.write(formated_buffer);
+	writeStream.write(Buffer.from(data_16.buffer));
 
 	last_frame = buffer;
 	console.log("blit to RGBA", frame, gifData.numFrames());
 
-	break;
 }
 
 writeStream.close();
